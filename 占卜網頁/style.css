@@ -1,0 +1,209 @@
+/* 基礎設定 */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #1a1a2e; /* 神秘深色背景 */
+    color: #e6e6fa;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    background-image: radial-gradient(circle at center, #2e1a47 0%, #120b29 100%);
+}
+
+/* 占卜容器 */
+.container {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 40px 30px;
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 20px rgba(138, 43, 226, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+/* 區塊切換隱藏設定 */
+.section {
+    display: none;
+    animation: fadeIn 0.5s ease;
+}
+
+.section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 首頁樣式 */
+.title {
+    font-size: 28px;
+    color: #ffd700;
+    margin-bottom: 20px;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.description {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 30px;
+    color: #b8b8d0;
+}
+
+/* 按鈕樣式 */
+.btn {
+    border: none;
+    border-radius: 30px;
+    padding: 15px 30px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    max-width: 250px;
+    outline: none;
+}
+
+.primary-btn {
+    background: linear-gradient(135deg, #8a2be2, #4b0082);
+    color: white;
+    box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
+}
+
+.primary-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(138, 43, 226, 0.6);
+    background: linear-gradient(135deg, #9b30ff, #5c0099);
+}
+
+.primary-btn:active {
+    transform: scale(0.95);
+}
+
+.secondary-btn {
+    background: transparent;
+    color: #e6e6fa;
+    border: 2px solid #8a2be2;
+    margin-top: 20px;
+}
+
+.secondary-btn:hover {
+    background: rgba(138, 43, 226, 0.2);
+    transform: translateY(-2px);
+}
+
+/* 載入中動畫 */
+.crystal-ball {
+    font-size: 60px;
+    animation: floating 2s ease-in-out infinite;
+    display: inline-block;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 0 20px rgba(138, 43, 226, 0.8));
+}
+
+@keyframes floating {
+    0% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-15px) scale(1.1); }
+    100% { transform: translateY(0) scale(1); }
+}
+
+.loading-text {
+    font-size: 18px;
+    color: #d8bfd8;
+    letter-spacing: 2px;
+}
+
+/* 結果區塊樣式 */
+.result-title {
+    font-size: 32px;
+    color: #ffb6c1;
+    margin-bottom: 10px;
+    text-shadow: 0 0 15px rgba(255, 182, 193, 0.5);
+}
+
+.result-desc {
+    font-size: 18px;
+    margin-bottom: 25px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.result-details {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 25px;
+    text-align: left;
+}
+
+.detail-item {
+    margin-bottom: 12px;
+    display: flex;
+    align-items: flex-start;
+}
+
+.detail-item:last-child {
+    margin-bottom: 0;
+}
+
+.detail-icon {
+    margin-right: 10px;
+    font-size: 20px;
+}
+
+.detail-label {
+    font-weight: bold;
+    color: #e6e6fa;
+    min-width: 50px;
+}
+
+.detail-text {
+    color: #b8b8d0;
+    flex: 1;
+    line-height: 1.4;
+}
+
+/* 結語區塊 */
+.quote-box {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 140, 0, 0.1));
+    border-left: 4px solid #ffd700;
+    padding: 15px;
+    border-radius: 0 10px 10px 0;
+    margin-bottom: 25px;
+    text-align: left;
+    font-style: italic;
+}
+
+.quote-text {
+    color: #ffd700;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+/* RWD 設定 */
+@media (max-width: 480px) {
+    .container {
+        padding: 30px 20px;
+        border-radius: 15px;
+    }
+    
+    .title {
+        font-size: 24px;
+    }
+    
+    .result-title {
+        font-size: 28px;
+    }
+}

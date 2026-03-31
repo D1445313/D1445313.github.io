@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>神秘運勢占卜</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 首頁區塊 -->
+        <div id="home-section" class="section active">
+            <h1 class="title">🔮 神秘運勢占卜 🔮</h1>
+            <p class="description">想知道你接下來的運勢如何嗎？<br>請在心中誠敬地默想，然後點下按鈕抽出你的專屬運勢！</p>
+            <button id="draw-btn" class="btn primary-btn">✨ 抽取我的運勢 ✨</button>
+        </div>
+
+        <!-- 載入中動畫區塊 -->
+        <div id="loading-section" class="section">
+            <div class="crystal-ball">🔮</div>
+            <p class="loading-text">正在為您感應宇宙能量...</p>
+        </div>
+
+        <!-- 結果區塊 -->
+        <div id="result-section" class="section">
+            <h2 id="result-type" class="result-title">運勢類型</h2>
+            <p id="result-desc" class="result-desc">簡短說明</p>
+            
+            <div class="result-details">
+                <div class="detail-item">
+                    <span class="detail-icon">💼</span>
+                    <span class="detail-label">工作：</span>
+                    <span id="result-work" class="detail-text">工作運勢</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-icon">📚</span>
+                    <span class="detail-label">學業：</span>
+                    <span id="result-academics" class="detail-text">學業運勢</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-icon">❤️</span>
+                    <span class="detail-label">愛情：</span>
+                    <span id="result-love" class="detail-text">愛情運勢</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-icon">💰</span>
+                    <span class="detail-label">金錢：</span>
+                    <span id="result-money" class="detail-text">金錢運勢</span>
+                </div>
+            </div>
+
+            <div class="quote-box">
+                <p id="result-quote" class="quote-text">鼓勵結語</p>
+            </div>
+
+            <button id="retry-btn" class="btn secondary-btn">再占卜一次</button>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

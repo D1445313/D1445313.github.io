@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>西屯飲料地圖 — 台中找飲料最快的方式</title>
+    <meta name="description" content="台中西屯區飲料地圖，快速找到附近飲料店、特約店家、支付方式與導航指引。" />
+
+    <!-- Leaflet.js -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap"
+        rel="stylesheet" />
+
+    <style>
+        /* ===== RESET & BASE ===== */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --primary: #2a7d4f;
+            --primary-lt: #e8f5ed;
+            --accent: #f4a229;
+            --text: #1e2a23;
+            --text-muted: #6b7c72;
+            --bg: #f5f9f6;
+            --card-bg: #ffffff;
+            --border: #d6e8db;
+            --radius: 14px;
+            --shadow: 0 2px 12px rgba(42, 125, 79, 0.10);
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ===== HEADER ===== */
+        header {
+            background: linear-gradient(135deg, #1e5c39 0%, #2a7d4f 60%, #3aaa6c 100%);
+            color: #fff;
+            padding: 20px 20px 18px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 16px rgba(30, 92, 57, 0.25);
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .header-icon {
+            font-size: 28px;
+        }
+
+        .header-title h1 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .header-title p {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+
+        /* ===== SEARCH BAR ===== */
+        .search-wrap {
+            position: relative;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 12px 44px 12px 16px;
+            border-radius: 12px;
+            border: none;
+            font-size: 15px;
+            font-family: inherit;
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--text);
+            outline: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        #searchInput::placeholder {
+            color: #9bb5a4;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        /* ===== FILTER CHIPS ===== */
+        .filter-bar {
+            padding: 12px 16px 4px;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .filter-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .chip {
+            flex-shrink: 0;
+            padding: 7px 14px;
+            border-radius: 20px;
+            border: 1.5px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text-muted);
+            font-size: 13px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .chip:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .chip.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+            font-weight: 600;
+        }
+
+        /* ===== MAP ===== */
+        #map {
+            width: 100%;
+            height: 260px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .map-label {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            padding: 5px 16px;
+            background: var(--primary-lt);
+        }
+
+        /* ===== RESULT COUNT ===== */
+        .result-info {
+            padding: 12px 16px 4px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .result-info span {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        /* ===== STORE CARDS ===== */
+        .card-list {
+            padding: 8px 16px 80px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .store-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1.5px solid var(--border);
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .store-card:active {
+            transform: scale(0.98);
+        }
+
+        .store-card.highlight {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(42, 125, 79, 0.15), var(--shadow);
+        }
+
+        .card-top {
+            display: flex;
+            align-items: flex-start;
+            padding: 14px 14px 0;
+            gap: 12px;
+        }
+
+        .store-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .card-meta {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .store-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .store-brand {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .store-address {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* ===== BADGES ===== */
+        .badge-row {
+            padding: 8px 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 3px 9px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-contract {
+            background: #fff3e0;
+            color: #e65100;
+            border: 1px solid #ffcc80;
+        }
+
+        .badge-pay {
+            background: var(--primary-lt);
+            color: var(--primary);
+            border: 1px solid #b2dfcc;
+        }
+
+        .badge-open {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+        }
+
+        .badge-closed {
+            background: #fce4ec;
+            color: #c62828;
+            border: 1px solid #f48fb1;
+        }
+
+        /* ===== SPECIALTIES ===== */
+        .specialties {
+            padding: 0 14px 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .specialties strong {
+            color: var(--text);
+        }
+
+        /* ===== NAV BUTTON ===== */
+        .card-footer {
+            display: flex;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn-nav {
+            flex: 1;
+            padding: 12px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            font-size: 14px;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .btn-nav:hover {
+            background: #1e5c39;
+        }
+
+        .btn-detail {
+            flex: none;
+            padding: 12px 16px;
+            background: var(--primary-lt);
+            color: var(--primary);
+            border: none;
+            border-left: 1px solid var(--border);
+            font-size: 13px;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-detail:hover {
+            background: #d0eadb;
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+            color: var(--text-muted);
+        }
+
+        .empty-state .emoji {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .empty-state p {
+            font-size: 15px;
+        }
+
+        /* ===== BOTTOM NAV ===== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border);
+            display: flex;
+            z-index: 1000;
+            box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .bnav-item {
+            flex: 1;
+            padding: 10px 4px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-family: inherit;
+            color: var(--text-muted);
+            font-size: 11px;
+            transition: color 0.2s;
+        }
+
+        .bnav-item.active {
+            color: var(--primary);
+        }
+
+        .bnav-item .icon {
+            font-size: 20px;
+        }
+
+        /* ===== DESKTOP ===== */
+        @media (min-width: 768px) {
+            body {
+                max-width: 480px;
+                margin: 0 auto;
+            }
+
+            header {
+                border-radius: 0 0 20px 20px;
+            }
+
+            #map {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ===== HEADER ===== -->
+    <header>
+        <div class="header-top">
+            <span class="header-icon">🧋</span>
+            <div class="header-title">
+                <h1>西屯飲料地圖</h1>
+                <p>台中西屯區 · 找飲料超快</p>
+            </div>
+        </div>
+
+        <div class="search-wrap">
+            <input type="text" id="searchInput" placeholder="搜尋品牌、飲料、地址…" autocomplete="off" />
+            <span class="search-icon">🔍</span>
+        </div>
+    </header>
+
+    <!-- ===== FILTERS ===== -->
+    <div class="filter-bar" id="filterBar">
+        <button class="chip active" data-filter="all">全部店家</button>
+        <button class="chip" data-filter="逢甲特約">🎓 逢甲特約</button>
+        <button class="chip" data-filter="東海特約">🎓 東海特約</button>
+        <button class="chip" data-filter="中科特約">🏭 中科特約</button>
+        <button class="chip" data-filter="line_pay">📱 Line Pay</button>
+        <button class="chip" data-filter="現金">💵 現金</button>
+    </div>
+
+    <!-- ===== MAP ===== -->
+    <div id="map"></div>
+    <div class="map-label">📍 點選地圖標記可快速查看店家資訊</div>
+
+    <!-- ===== RESULT COUNT ===== -->
+    <div class="result-info" id="resultInfo">
+        顯示 <span id="resultCount">0</span> 間店家
+    </div>
+
+    <!-- ===== CARDS ===== -->
+    <div class="card-list" id="cardList"></div>
+
+    <!-- ===== BOTTOM NAV ===== -->
+    <div class="bottom-nav">
+        <button class="bnav-item active">
+            <span class="icon">🗺️</span>地圖
+        </button>
+        <button class="bnav-item">
+            <span class="icon">🔍</span>搜尋
+        </button>
+        <button class="bnav-item">
+            <span class="icon">⭐</span>特約
+        </button>
+    </div>
+
+    <script>
+        // ============================================================
+        //  店家資料
+        // ============================================================
+        const stores = [
+            {
+                id: 1,
+                name: "50嵐 逢甲店",
+                brand: "50嵐",
+                address: "台中市西屯區逢甲路260號",
+                lat: 24.1795, lng: 120.6438,
+                isOpen: true,
+                contracts: ["逢甲特約"],
+                payment: ["Line Pay", "街口", "現金"],
+                specialties: ["波霸奶茶", "四季春茶拿鐵", "黑糖珍珠"],
+                emoji: "🟡",
+                color: "#fff8e1"
+            },
+            {
+                id: 2,
+                name: "珍煮丹 逢甲店",
+                brand: "珍煮丹",
+                address: "台中市西屯區文華路123號",
+                lat: 24.1810, lng: 120.6421,
+                isOpen: true,
+                contracts: ["逢甲特約"],
+                payment: ["Line Pay", "Apple Pay", "現金"],
+                specialties: ["黃金珍珠鮮奶茶", "鉑金蔗香鮮奶茶"],
+                emoji: "🟠",
+                color: "#fff3e0"
+            },
+            {
+                id: 3,
+                name: "茶湯會 七期店",
+                brand: "茶湯會",
+                address: "台中市西屯區市政路402號",
+                lat: 24.1638, lng: 120.6472,
+                isOpen: true,
+                contracts: ["中科特約"],
+                payment: ["街口", "現金"],
+                specialties: ["珍珠牛奶茶", "烏龍多多"],
+                emoji: "🟢",
+                color: "#e8f5e9"
+            },
+            {
+                id: 4,
+                name: "迷客夏 西屯路店",
+                brand: "迷客夏",
+                address: "台中市西屯區西屯路二段158號",
+                lat: 24.1728, lng: 120.6221,
+                isOpen: false,
+                contracts: ["東海特約"],
+                payment: ["Line Pay", "現金"],
+                specialties: ["生乳波波", "白玉珍珠鮮奶茶", "百香果茶"],
+                emoji: "🔵",
+                color: "#e3f2fd"
+            },
+            {
+                id: 5,
+                name: "可不可熟成紅茶 逢甲",
+                brand: "可不可熟成紅茶",
+                address: "台中市西屯區逢甲路158號",
+                lat: 24.1802, lng: 120.6446,
+                isOpen: true,
+                contracts: ["逢甲特約"],
+                payment: ["Apple Pay", "街口", "現金"],
+                specialties: ["熟成紅茶拿鐵", "特濃ㄈ奶茶"],
+                emoji: "🟤",
+                color: "#fbe9e7"
+            },
+            {
+                id: 6,
+                name: "麻古茶坊 西屯店",
+                brand: "麻古茶坊",
+                address: "台中市西屯區漢翔路55號",
+                lat: 24.1682, lng: 120.6312,
+                isOpen: true,
+                contracts: ["東海特約", "中科特約"],
+                payment: ["Line Pay", "Apple Pay", "現金"],
+                specialties: ["波霸芋見鮮奶茶", "椰果珍珠奶茶"],
+                emoji: "🟣",
+                color: "#f3e5f5"
+            },
+            {
+                id: 7,
+                name: "COMEBUY 七期旗艦店",
+                brand: "COMEBUY",
+                address: "台中市西屯區惠來路二段88號",
+                lat: 24.1615, lng: 120.6508,
+                isOpen: true,
+                contracts: ["中科特約"],
+                payment: ["Line Pay", "街口", "Apple Pay", "現金"],
+                specialties: ["芋芋珍珠奶茶", "現榨柳橙綠"],
+                emoji: "🔴",
+                color: "#fce4ec"
+            },
+            {
+                id: 8,
+                name: "清心福全 西屯中清店",
+                brand: "清心福全",
+                address: "台中市西屯區中清路一段101號",
+                lat: 24.1890, lng: 120.6352,
+                isOpen: false,
+                contracts: [],
+                payment: ["現金"],
+                specialties: ["椰果紅茶", "冬瓜茶", "奶茶"],
+                emoji: "⚪",
+                color: "#f5f5f5"
+            }
+        ];
+
+        // ============================================================
+        //  地圖初始化
+        // ============================================================
+        const map = L.map('map', { zoomControl: true }).setView([24.175, 120.637], 14);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/">OpenStreetMap</a>',
+            maxZoom: 19
+        }).addTo(map);
+
+        const markers = {};
+
+        stores.forEach(s => {
+            const icon = L.divIcon({
+                className: '',
+                html: `<div style="
+      width:36px; height:36px;
+      border-radius:50% 50% 50% 0;
+      transform: rotate(-45deg);
+      background:${s.isOpen ? '#2a7d4f' : '#9e9e9e'};
+      border:3px solid #fff;
+      box-shadow:0 2px 8px rgba(0,0,0,0.2);
+      display:flex; align-items:center; justify-content:center;
+    "><span style="transform:rotate(45deg);font-size:16px;">${s.emoji}</span></div>`,
+                iconSize: [36, 36],
+                iconAnchor: [18, 36],
+                popupAnchor: [0, -38]
+            });
+
+            const marker = L.marker([s.lat, s.lng], { icon }).addTo(map);
+            marker.bindPopup(`
+    <div style="font-family:'Noto Sans TC',sans-serif;min-width:160px;">
+      <strong style="font-size:14px;">${s.emoji} ${s.name}</strong><br>
+      <span style="font-size:12px;color:#666;">${s.address}</span><br><br>
+      <a href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}"
+         target="_blank"
+         style="
+           display:block; text-align:center;
+           background:#2a7d4f; color:#fff;
+           padding:7px 12px; border-radius:8px;
+           text-decoration:none; font-size:13px; font-weight:600;
+         ">🧭 開始導航</a>
+    </div>
+  `);
+
+            marker.on('click', () => {
+                const card = document.getElementById(`card-${s.id}`);
+                if (card) {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    card.classList.add('highlight');
+                    setTimeout(() => card.classList.remove('highlight'), 2000);
+                }
+            });
+
+            markers[s.id] = marker;
+        });
+
+        // ============================================================
+        //  篩選邏輯
+        // ============================================================
+        let activeFilter = 'all';
+        let searchQuery = '';
+
+        function matchesFilter(s) {
+            if (activeFilter === 'all') return true;
+            if (activeFilter === 'line_pay') return s.payment.includes('Line Pay');
+            if (activeFilter === '現金') return s.payment.includes('現金');
+            return s.contracts.includes(activeFilter);
+        }
+
+        function matchesSearch(s) {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            return (
+                s.name.toLowerCase().includes(q) ||
+                s.brand.toLowerCase().includes(q) ||
+                s.address.toLowerCase().includes(q) ||
+                s.specialties.some(sp => sp.toLowerCase().includes(q)) ||
+                s.contracts.some(c => c.toLowerCase().includes(q))
+            );
+        }
+
+        function renderCards() {
+            const list = document.getElementById('cardList');
+            list.innerHTML = '';
+            let count = 0;
+
+            stores.forEach(s => {
+                const show = matchesFilter(s) && matchesSearch(s);
+
+                // 地圖標記顯示/隱藏
+                if (markers[s.id]) {
+                    if (show) {
+                        markers[s.id].addTo(map);
+                    } else {
+                        map.removeLayer(markers[s.id]);
+                    }
+                }
+
+                if (!show) return;
+                count++;
+
+                const contractBadges = s.contracts.map(c =>
+                    `<span class="badge badge-contract">🎓 ${c}</span>`
+                ).join('');
+
+                const payBadges = s.payment.map(p => {
+                    const icon = p === 'Line Pay' ? '📲' : p === 'Apple Pay' ? '🍎' : p === '街口' ? '💳' : '💵';
+                    return `<span class="badge badge-pay">${icon} ${p}</span>`;
+                }).join('');
+
+                const statusBadge = s.isOpen
+                    ? `<span class="badge badge-open">● 營業中</span>`
+                    : `<span class="badge badge-closed">● 休息中</span>`;
+
+                const card = document.createElement('div');
+                card.className = 'store-card';
+                card.id = `card-${s.id}`;
+                card.innerHTML = `
+      <div class="card-top">
+        <div class="store-avatar" style="background:${s.color};">
+          ${s.emoji}
+        </div>
+        <div class="card-meta">
+          <div class="store-name">${s.name}</div>
+          <div class="store-brand">${s.brand}</div>
+          <div class="store-address">📍 ${s.address}</div>
+        </div>
+      </div>
+
+      <div class="badge-row">
+        ${statusBadge}
+        ${contractBadges}
+        ${payBadges}
+      </div>
+
+      <div class="specialties">
+        <strong>招牌飲料：</strong>${s.specialties.join('、')}
+      </div>
+
+      <div class="card-footer">
+        <a
+          class="btn-nav"
+          href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}"
+          target="_blank"
+        >🧭 開始導航</a>
+        <button class="btn-detail" onclick="focusOnMap(${s.id})">📍 地圖</button>
+      </div>
+    `;
+                list.appendChild(card);
+            });
+
+            document.getElementById('resultCount').textContent = count;
+
+            if (count === 0) {
+                list.innerHTML = `
+      <div class="empty-state">
+        <div class="emoji">🔍</div>
+        <p>找不到符合的店家<br>試試其他關鍵字</p>
+      </div>`;
+            }
+        }
+
+        function focusOnMap(id) {
+            const s = stores.find(s => s.id === id);
+            if (!s) return;
+            map.setView([s.lat, s.lng], 17, { animate: true });
+            markers[id]?.openPopup();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ===== Events =====
+        document.getElementById('searchInput').addEventListener('input', e => {
+            searchQuery = e.target.value.trim();
+            renderCards();
+        });
+
+        document.getElementById('filterBar').addEventListener('click', e => {
+            const chip = e.target.closest('.chip');
+            if (!chip) return;
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            activeFilter = chip.dataset.filter;
+            renderCards();
+        });
+
+        // 初始渲染
+        renderCards();
+    </script>
+</body>
+
+</html>
